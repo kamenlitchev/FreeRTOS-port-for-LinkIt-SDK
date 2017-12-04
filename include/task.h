@@ -1991,6 +1991,17 @@ eSleepModeStatus eTaskConfirmSleepModeStatus( void ) PRIVILEGED_FUNCTION;
  */
 void *pvTaskIncrementMutexHeldCount( void );
 
+/*
+ * Clear runtime counter for peroid cpu usage measure.
+ */
+void vTaskClearTaskRunTimeCounter( void ) PRIVILEGED_FUNCTION;
+
+
+/*
+ * Get the stack bottom of xTaskHandle
+ */
+UBaseType_t uxTaskGetBottomOfStack(TaskHandle_t xTaskHandle) PRIVILEGED_FUNCTION;
+
 #ifdef __cplusplus
 }
 #endif

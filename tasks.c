@@ -2475,7 +2475,7 @@ BaseType_t xReturn;
 		xReturn = pdFALSE;
 	}
 
-	#if( configUSE_TICKLESS_IDLE == 1 )
+	#if( configUSE_TICKLESS_IDLE != 0 )
 	{
 		/* If a task is blocked on a kernel object then xNextTaskUnblockTime
 		might be set to the blocked task's time out time.  If the task is
@@ -4312,6 +4312,55 @@ TickType_t uxReturn;
 
 /*-----------------------------------------------------------*/
 
+#if ( configGENERATE_RUN_TIME_STATS == 1 )
+
+	void vTaskClearTaskRunTimeCounter( void )
+	{
+		TaskStatus_t *pxTaskStatusArray;
+		volatile UBaseType_t uxArraySize, x;
+		uint32_t ulTotalTime;
+		TCB_t *pxTCB;
+
+		/* Take a snapshot of the number of tasks in case it changes while this
+		function is executing. */
+		uxArraySize = uxCurrentNumberOfTasks;
+
+		/* Allocate an array index for each task. */
+		pxTaskStatusArray = pvPortMalloc( uxCurrentNumberOfTasks * sizeof( TaskStatus_t ) );
+
+		if( pxTaskStatusArray != NULL )
+		{
+			/* Generate the (binary) data. */
+			uxArraySize = uxTaskGetSystemState( pxTaskStatusArray, uxArraySize, &ulTotalTime );
+
+			for( x = 0; x < uxArraySize; x++ )
+			{
+				/* If null is passed in here then the name of the calling task is being queried. */
+				pxTCB = prvGetTCBFromHandle(pxTaskStatusArray[x].xHandle);
+				configASSERT( pxTCB );
+				pxTCB->ulRunTimeCounter = 0;
+			}
+			
+			vPortFree(pxTaskStatusArray);
+		}
+	}
+
+#endif /* configGENERATE_RUN_TIME_STATS */
+
+UBaseType_t uxTaskGetBottomOfStack(TaskHandle_t xTaskHandle)
+{
+	TCB_t *pxTCB;
+
+	pxTCB = ( xTaskHandle == NULL )? ( TCB_t * ) pxCurrentTCB : ( TCB_t * ) ( xTaskHandle );
+
+#if portSTACK_GROWTH < 0
+	return ( UBaseType_t )( pxTCB->pxStack );
+#else
+	return ( UBaseType_t )( pxTCB->pxEndOfStack );
+#endif
+}
+
+/*-----------------------------------------------------------*/
 
 #ifdef FREERTOS_MODULE_TEST
 	#include "tasks_test_access_functions.h"
